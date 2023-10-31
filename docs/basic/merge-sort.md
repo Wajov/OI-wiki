@@ -1,90 +1,191 @@
-## 算法
+## 定义
 
-归并排序是一种采用了 [分治](./divide-and-conquer.md) 思想的排序算法，其本质是一种 [CDQ 分治](../misc/cdq-divide.md) 。
+归并排序（[merge sort](https://en.wikipedia.org/wiki/Merge_sort)）是高效的基于比较的稳定排序算法。
 
-归并排序分为三个过程：
+## 性质
 
-1.  将数列划分为两部分（在均匀划分时时间复杂度为 $O\left(n\log{n}\right)$ ）；
-2.  递归地分别对两个子序列进行归并排序；
-3.  合并两个子序列。
+归并排序基于分治思想将数组分段排序后合并，时间复杂度在最优、最坏与平均情况下均为 $\Theta (n \log n)$，空间复杂度为 $\Theta (n)$。
 
-不难发现，归并排序的核心是如何合并两个子序列，前两步都很好实现。
+归并排序可以只使用 $\Theta (1)$ 的辅助空间，但为便捷通常使用与原数组等长的辅助数组。
 
-其实合并的时候也不难操作。注意到两个子序列在第二步中已经保证了都是有序的了，第三步中实际上是想要把两个 **有序** 的序列合并起来。
+## 过程
 
-```cpp
-void merge(int ll, int rr) {
-  // 用来把 a[ll.. rr - 1] 这一区间的数排序。 t 数组是临时存放有序的版本用的。
-  if (rr - ll <= 1) return;
-  int mid = ll + (rr - ll >> 1);
-  merge(ll, mid);
-  merge(mid, rr);
-  int p = ll, q = mid, s = ll;
-  while (s < rr) {
-    if (p >= mid || (q < rr && a[p] > a[q])) {
-      t[s++] = a[q++];
-      // ans += mid - p;
-    } else
-      t[s++] = a[p++];
-  }
-  for (int i = ll; i < rr; ++i) a[i] = t[i];
-}
-```
+### 合并
 
-下面参考《算法 4》的 Java 完整代码，很漂亮，建议背住，学习一下代码风格。
+归并排序最核心的部分是合并（merge）过程：将两个有序的数组 `a[i]` 和 `b[j]` 合并为一个有序数组 `c[k]`。
 
-```java
-public class Merge {
-    private static Comparable[] aux;
+从左往右枚举 `a[i]` 和 `b[j]`，找出最小的值并放入数组 `c[k]`；重复上述过程直到 `a[i]` 和 `b[j]` 有一个为空时，将另一个数组剩下的元素放入 `c[k]`。
 
-     public static void sort(Comparable[] a) {
-        aux = new Comparable[a.length];
-        sort(a, 0, a.length - 1);
-    }
+为保证排序的稳定性，前段首元素小于或等于后段首元素时（`a[i] <= b[j]`）而非小于时（`a[i] < b[j]`）就要作为最小值放入 `c[k]`。
 
-    private static void sort(Comparable[] a, int lo, int hi) {
-        if (lo >= hi) return;
-        int mid = lo + (hi - lo) / 2;
-        sort(a, lo, mid);
-        sort(a, mid + 1, hi);
-        merge(a, lo, mid, hi);
-    }
+#### 实现
 
-    private static void merge(Comparable[] a, int lo, int mid, int hi) {
-        int i = lo, j = mid + 1;
-        for (int k = lo; k <= hi; k++) {
-            aux[k] = a[k];
+=== "C/C++"
+    === "数组实现"
+        ```cpp
+        void merge(const int *a, size_t aLen, const int *b, size_t bLen, int *c) {
+          size_t i = 0, j = 0, k = 0;
+          while (i < aLen && j < bLen) {
+            if (b[j] < a[i]) {  // <!> 先判断 b[j] < a[i]，保证稳定性
+              c[k] = b[j];
+              ++j;
+            } else {
+              c[k] = a[i];
+              ++i;
+            }
+            ++k;
+          }
+          // 此时一个数组已空，另一个数组非空，将非空的数组并入 c 中
+          for (; i < aLen; ++i, ++k) c[k] = a[i];
+          for (; j < bLen; ++j, ++k) c[k] = b[j];
         }
-        for (int k = lo; k <= hi; k++) {
-            if      (i > mid)               { a[k] = aux[j++]; }
-            else if (j > hi)                { a[k] = aux[i++]; }
-            else if (less(aux[j], aux[i]))  { a[k] = aux[j++]; }
-            else                            { a[k] = aux[i++]; }
+        ```
+    
+    === "指针实现"
+        ```cpp
+        void merge(const int *aBegin, const int *aEnd, const int *bBegin,
+                   const int *bEnd, int *c) {
+          while (aBegin != aEnd && bBegin != bEnd) {
+            if (*bBegin < *aBegin) {
+              *c = *bBegin;
+              ++bBegin;
+            } else {
+              *c = *aBegin;
+              ++aBegin;
+            }
+            ++c;
+          }
+          for (; aBegin != aEnd; ++aBegin, ++c) *c = *aBegin;
+          for (; bBegin != bEnd; ++bBegin, ++c) *c = *bBegin;
         }
-    }
+        ```
 
-    private static boolean less(Comparable v, Comparable w) {
-        return v.compareTo(w) < 0;
-    }
-}
-```
+    也可使用 `<algorithm>` 库的 `merge` 函数，用法与上述指针式写法的相同。
 
-关键点在于一次性创建数组，避免在每次递归调用时创建，避免了对象的无谓构造和析构。
+=== "Python"
+    ```python
+    def merge(a, b):
+        i, j = 0, 0
+        c = []
+        while(i < len(a) and j < len(b)):
+            # <!> 先判断 b[j] < a[i]，保证稳定性
+            if(b[j] < a[i]):
+                c.append(b[j])
+                j += 1
+            else:
+                c.append(a[i])
+                i += 1
+        # 此时一个数组已空，另一个数组非空，将非空的数组并入 c 中
+        c.extend(a[i:])
+        c.extend(b[j:])
+        return c
+    ```
+
+### 分治法实现归并排序
+
+1.  当数组长度为 $1$ 时，该数组就已经是有序的，不用再分解。
+
+2.  当数组长度大于 $1$ 时，该数组很可能不是有序的。此时将该数组分为两段，再分别检查两个数组是否有序（用第 1 条）。如果有序，则将它们合并为一个有序数组；否则对不有序的数组重复第 2 条，再合并。
+
+用数学归纳法可以证明该流程可以将一个数组转变为有序数组。
+
+为保证排序的复杂度，通常将数组分为尽量等长的两段（$mid = \left\lfloor \dfrac{l + r}{2} \right\rfloor$）。
+
+#### 实现
+
+注意下面的代码所表示的区间分别是 $[l, r)$，$[l, mid)$，$[mid, r)$。
+
+=== "C/C++"
+    ```cpp
+    void merge_sort(int *a, int l, int r) {
+      if (r - l <= 1) return;
+      // 分解
+      int mid = l + ((r - l) >> 1);
+      merge_sort(a, l, mid), merge_sort(a, mid, r);
+      // 合并
+      int tmp[1024] = {};  // 请结合实际情况设置 tmp 数组的长度（与 a 相同），或使用
+                           // vector；先将合并的结果放在 tmp 里，再返回到数组 a
+      merge(a + l, a + mid, a + mid, a + r, tmp + l);  // pointer-style merge
+      for (int i = l; i < r; ++i) a[i] = tmp[i];
+    }
+    ```
+
+=== "Python"
+    ```python
+    def merge_sort(a, ll, rr):
+        if rr - ll <= 1:
+            return
+        # 分解
+        mid = (rr + ll) // 2
+        merge_sort(a, ll, mid)
+        merge_sort(a, mid, rr)
+        # 合并
+        a[ll:rr] = merge(a[ll:mid], a[mid:rr])
+    ```
+
+### 倍增法实现归并排序
+
+已知当数组长度为 $1$ 时，该数组就已经是有序的。
+
+将数组全部切成长度为 $1$ 的段。
+
+从左往右依次合并两个长度为 $1$ 的有序段，得到一系列长度 $\le 2$ 的有序段；
+
+从左往右依次合并两个长度 $\le 2$ 的有序段，得到一系列长度 $\le 4$ 的有序段；
+
+从左往右依次合并两个长度 $\le 4$ 的有序段，得到一系列长度 $\le 8$ 的有序段；
+
+……
+
+重复上述过程直至数组只剩一个有序段，该段就是排好序的原数组。
+
+???+ note " 为什么是 $\le n$ 而不是 $= n$"
+    数组的长度很可能不是 $2^x$，此时在最后就可能出现长度不完整的段，可能出现最后一个段是独立的情况。
+
+#### 实现
+
+=== "C/C++"
+    ```cpp
+    void merge_sort(int *a, size_t n) {
+      int tmp[1024] = {};  // 请结合实际情况设置 tmp 数组的长度（与 a 相同），或使用
+                           // vector；先将合并的结果放在 tmp 里，再返回到数组 a
+      for (size_t seg = 1; seg < n; seg <<= 1) {
+        for (size_t left1 = 0; left1 < n - seg;
+             left1 += seg + seg) {  // n - seg: 如果最后只有一个段就不用合并
+          size_t right1 = left1 + seg;
+          size_t left2 = right1;
+          size_t right2 = std::min(left2 + seg, n);  // <!> 注意最后一个段的边界
+          merge(a + left1, a + right1, a + left2, a + right2,
+                tmp + left1);  // pointer-style merge
+          for (size_t i = left1; i < right2; ++i) a[i] = tmp[i];
+        }
+      }
+    }
+    ```
+
+=== "Python"
+    ```python
+    def merge_sort(a):
+        seg = 1
+        while seg < len(a):
+            for l1 in range(0, len(a) - seg, seg + seg):
+                r1 = l1 + seg
+                l2 = r1
+                r2 = l2 + seg
+                a[l1:r2] = merge(a[l1:r1], a[l2:r2])
+        seg <<= 1
+    ```
 
 ## 逆序对
 
-归并排序还可以用来求逆序对的个数。
+逆序对是 $i < j$ 且 $a_i > a_j$ 的有序数对 $(i, j)$。
 
-所谓逆序对，就是满足 $a_{i} > a_{j}$ 且 $i < j$ 的数对 $(i, j)$ 。
+排序后的数组无逆序对，归并排序的合并操作中，每次后段首元素被作为当前最小值取出时，前段剩余元素个数之和即是合并操作减少的逆序对数量；故归并排序计算逆序对数量的额外时间复杂度为 $\Theta (n \log n)$，对于 C/C++ 代码将 `merge` 过程的 `if(b[j] < a[i])` 部分加上 `cnt += aLen - i` 或 `cnt += aEnd - aBegin` 即可，对于 Python 代码将 `merge` 过程的 `if(b[j] < a[i]):` 部分加上 `cnt += len(a) - i` 即可。
 
-可以用 [树状数组](../ds/bit.md) 、 [线段树](../ds/seg.md) 等数据结构来求，也可以用归并排序来求。
+此外，逆序对计数即是将元素依次加入数组时统计当前大于其的元素数量，将数组离散化后即是区间求和问题，使用树状数组或线段树解决的时间复杂度为 $O(n \log n)$ 且空间复杂度为 $\Theta (n)$。
 
-具体来说，上面归并排序中间注释掉的 `ans += mid - p` 就是在统计逆序对个数。
+## 外部链接
 
-是因为，那里把靠后的数放到前面了（较小的数放在前面），所以在这个数的原来位置之前的、比它大的数都会和它形成逆序对，而这个个数就是还没有合并进去的数的个数，即为 `mid - p` 。
-
-使用归并排序求逆序对的时间复杂度也是 $O(n \log n)​$ 。
-
-## 参考
-
- <https://www.geeksforgeeks.org/merge-sort/> 
+-   [Merge Sort - GeeksforGeeks](https://www.geeksforgeeks.org/merge-sort/)
+-   [归并排序 - 维基百科，自由的百科全书](https://zh.wikipedia.org/wiki/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F)
+-   [逆序对 - 维基百科，自由的百科全书](https://zh.wikipedia.org/wiki/%E9%80%86%E5%BA%8F%E5%AF%B9)

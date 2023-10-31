@@ -1,10 +1,24 @@
-每次找出第 $i$ 小的元素（也就是 $A_{i..n}$ 中最小的元素），将这个元素与数组第 $i$ 个位置上的元素交换。
+本页面将简要介绍选择排序。
 
-时间复杂度为 $O(n^2)$ 。
+## 定义
 
-由于 swap（交换两个元素）操作的存在，选择排序是一个不稳定排序。
+选择排序（英语：Selection sort）是一种简单直观的排序算法。它的工作原理是每次找出第 $i$ 小的元素（也就是 $A_{i..n}$ 中最小的元素），然后将这个元素与数组第 $i$ 个位置上的元素交换。
 
-伪代码：
+![selection sort animate example](images/selection-sort-animate.svg)
+
+## 性质
+
+### 稳定性
+
+由于 swap（交换两个元素）操作的存在，选择排序是一种不稳定的排序算法。
+
+### 时间复杂度
+
+选择排序的最优时间复杂度、平均时间复杂度和最坏时间复杂度均为 $O(n^2)$。
+
+## 代码实现
+
+### 伪代码
 
 $$
 \begin{array}{ll}
@@ -20,20 +34,28 @@ $$
 \end{array}
 $$
 
-C++ 代码：
-
-```cpp
-void selection_sort(int* a, int n) {
-  for (int i = 1; i < n; ++i) {
-    int ith = i;
-    for (int j = i + 1; j <= n; ++j) {
-      if (a[j] < a[ith]) {
-        ith = j;
+=== "C++"
+    ```cpp
+    void selection_sort(int* a, int n) {
+      for (int i = 1; i < n; ++i) {
+        int ith = i;
+        for (int j = i + 1; j <= n; ++j) {
+          if (a[j] < a[ith]) {
+            ith = j;
+          }
+        }
+        std::swap(a[i], a[ith]);
       }
     }
-    int t = a[i];
-    a[i] = a[ith];
-    a[ith] = t;
-  }
-}
-```
+    ```
+
+=== "Python"
+    ```python
+    def selection_sort(a, n):
+        for i in range(1, n):
+            ith = i
+            for j in range(i + 1, n + 1):
+                if a[j] < a[ith]:
+                    ith = j
+            a[i], a[ith] = a[ith], a[i]
+    ```

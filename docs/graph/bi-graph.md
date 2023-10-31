@@ -6,9 +6,7 @@
 
 换言之，存在一种方案，将节点划分成满足以上性质的两个集合。
 
-![](./images/bi-graph.png)
-
-（图源 [英文维基](https://en.wikipedia.org/wiki/Bipartite_graph) ）
+![](./images/bi-graph.svg)
 
 ## 性质
 
@@ -25,18 +23,22 @@
 
 显然，直接枚举答案集合的话实在是太慢了，我们需要更高效的方法。
 
-考虑上文提到的性质，我们可以使用 [DFS（图论）](/graph/dfs) 或者 [BFS](/graph/bfs) 来遍历这张图。如果发现了奇环，那么就不是二分图，否则是。
+考虑上文提到的性质，我们可以使用 [DFS（图论）](./dfs.md) 或者 [BFS](./bfs.md) 来遍历这张图。如果发现了奇环，那么就不是二分图，否则是。
 
 ## 应用
 
-### 二分图匹配
+### 二分图最大匹配
 
-#### 霍尔定理
+详见 [二分图最大匹配](./graph-matching/bigraph-match.md) 页面。
 
-设二部图 $G=<V_1, V_2, E>, |V_1| \leq |V_2|$ ，则 $G$ 中存在 $V_1$ 到 $V_2$ 的完备匹配当且仅当对于任意的 $S \subset V_1$ ，均有 $|S|\leq|N(S)|$ ，其中 $N(S)=\Cup_{v_i \in S}{N(V_i)}$ ，是 $S$ 的邻域。
+### 二分图最大权匹配
 
-#### 最大匹配
+详见 [二分图最大权匹配](./graph-matching/bigraph-weight-match.md) 页面。
 
-#### 最大权匹配
+### 一般图最大匹配
 
-## 一般图匹配
+详见 [一般图最大匹配](./graph-matching/general-match.md) 页面。
+
+### 一般图最大权匹配
+
+详见 [一般图最大权匹配](./graph-matching/general-weight-match.md) 页面。
